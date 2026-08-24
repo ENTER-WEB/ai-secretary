@@ -85,6 +85,42 @@ export default function Home() {
     form?.addEventListener("submit", onSubmit, true);
     return () => form?.removeEventListener("submit", onSubmit, true);
   }, []);
+  useEffect(() => {
+    const form = document.querySelector<HTMLFormElement>(".composer");
+    const onChatSubmit = (event: Event) => {
+      const inputElement = form?.querySelector<HTMLInputElement>("input");
+      const text = inputElement?.value.trim() ?? "";
+      if (!inputElement || !text || text === "/greeting" || activeTab !== "talk") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      inputElement.value = "";
+      setInput("");
+      const existing = chats.find((chat) => chat.id === activeChatId)?.messages ?? [];
+      const context = [...existing, { role: "user" as const, text }].slice(-8);
+      setChats((current) => current.map((chat) => chat.id === activeChatId ? { ...chat, messages: [...chat.messages, { id: id(), role: "user", text, time: time() }] } : chat));
+      setIsResponding(true);
+      void (async () => {
+        try {
+          const response = await fetch("http://127.0.0.1:4317/chat", { method: "POST", headers: { "content-type": "application/json", "x-ai-secretary-approval": "confirmed" }, body: JSON.stringify({ messages: context }) });
+          if (!response.ok) throw new Error("Codex bridge is unavailable.");
+          const { id: jobId } = await response.json();
+          const poll = async (): Promise<void> => {
+            const jobResponse = await fetch(`http://127.0.0.1:4317/jobs/${jobId}`);
+            if (!jobResponse.ok) throw new Error("Chat job could not be read.");
+            const job = await jobResponse.json();
+            if (job.status === "running") return void window.setTimeout(() => { void poll(); }, 800);
+            const reply = job.status === "completed" && job.reply ? job.reply : "今はCodexから返答を受け取れませんでした。少し時間をおいて、もう一度話しかけてください。";
+            setChats((current) => current.map((chat) => chat.id === activeChatId ? { ...chat, messages: [...chat.messages, { id: id(), role: "assistant", text: reply, time: time() }] } : chat));
+          };
+          await poll();
+        } catch {
+          setChats((current) => current.map((chat) => chat.id === activeChatId ? { ...chat, messages: [...chat.messages, { id: id(), role: "assistant", text: "Codexとの接続を確認できません。ローカルブリッジを起動してから、もう一度話しかけてください。", time: time() }] } : chat));
+        } finally { setIsResponding(false); }
+      })();
+    };
+    form?.addEventListener("submit", onChatSubmit, true);
+    return () => form?.removeEventListener("submit", onChatSubmit, true);
+  }, [activeChatId, activeTab, chats]);
   useEffect(() => { if (hasRestoredChats) window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats, hasRestoredChats]);
 
   function updateChat(chatId: string, updater: (chat: Chat) => Chat) { setChats((current) => current.map((chat) => (chat.id === chatId ? updater(chat) : chat))); }
