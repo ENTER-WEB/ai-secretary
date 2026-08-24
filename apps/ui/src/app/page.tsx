@@ -39,7 +39,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"talk" | "work">("talk");
   const [input, setInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>("/secretary-default.png");
   const [isResponding, setIsResponding] = useState(false);
   const [notice, setNotice] = useState("ローカルモード：Codexの認証情報はこの画面に保存されません。");
   const activeChat = useMemo(() => chats.find((chat) => chat.id === activeChatId) ?? chats[0], [activeChatId, chats]);
