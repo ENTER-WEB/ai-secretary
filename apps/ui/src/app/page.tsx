@@ -9,6 +9,14 @@ type Chat = { id: string; title: string; messages: Message[]; tasks: Task[] };
 
 const time = () => new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 const id = () => Math.random().toString(36).slice(2, 10);
+const dailyOpenings = ["おかえりなさい。", "今日もここまで来られましたね。", "お待ちしていました。", "まずは、深呼吸から始めましょう。"];
+const dailyCare = ["今日のがんばりは、私がここで預かっています。", "頭の中が少し散らかっていても大丈夫です。", "小さな前進も、ちゃんと仕事の一部です。", "気になっていることは、言葉にするだけでも軽くなります。"];
+const dailySupport = ["急がなくて大丈夫です。次の一歩を、いっしょにほどいていきましょう。", "終わったことにも、ちゃんと丸をつけてあげましょうね。", "あなたのペースで大丈夫。私は隣で、次の一手を見つけます。", "いま一番大切なことから、静かに整えていきましょう。"];
+const greetingForToday = () => {
+  const key = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
+  const seed = [...key].reduce((total, character) => total + character.charCodeAt(0), 0);
+  return [dailyOpenings[seed % dailyOpenings.length], dailyCare[Math.floor(seed / 4) % dailyCare.length], dailySupport[Math.floor(seed / 16) % dailySupport.length]].join("\n");
+};
 const taskStatusLabel = (status: Task["status"]) => ({ draft: "確認待ち", approved: "実行許可済み", done: "完了", running: "実行中", completed: "完了", failed: "失敗" })[status];
 
 function loadChats(): Chat[] {
@@ -39,6 +47,10 @@ export default function Home() {
     setChats(restoredChats);
     setActiveChatId(restoredChats[0].id);
     setHasRestoredChats(true);
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => document.querySelector(".stage-copy")?.setAttribute("data-daily-greeting", greetingForToday()), 0);
+    return () => window.clearTimeout(timer);
   }, []);
   useEffect(() => { if (hasRestoredChats) window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats, hasRestoredChats]);
 

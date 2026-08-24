@@ -35,7 +35,7 @@
 .stage-copy h2,
 .stage-copy > p:not(.eyebrow) { display: none; }
 .stage-copy::before {
-  content: "おかえりなさい。今日のがんばりは、私がここで預かっています。\A暑さで少し疲れていそうですね。ひと呼吸、いっしょに休みましょうか。\A急がなくて大丈夫です。次の一歩を、いっしょにほどいていきましょう。";
+  content: attr(data-daily-greeting);
   display: block;
   white-space: pre-line;
   position: relative;
