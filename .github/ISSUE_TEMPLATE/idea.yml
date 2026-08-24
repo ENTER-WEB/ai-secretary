@@ -1,0 +1,29 @@
+name: Idea intake
+description: アイデアや軽い要件を精緻化する
+title: "[Idea] "
+labels: [idea, discovery]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: 誰のどの問題か。現在の代替手段も記載してください。
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+      description: 成功をどのように測るか。
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: 期限、予算、データ、セキュリティ、環境、ハードウェア、運用。
+  - type: textarea
+    id: unknowns
+    attributes:
+      label: Unknowns and assumptions
+

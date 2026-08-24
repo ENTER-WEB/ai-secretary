@@ -1,0 +1,20 @@
+{
+  "name": "System Development OS",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "postCreateCommand": "python scripts/validate.py",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bierner.markdown-mermaid",
+        "davidanson.vscode-markdownlint"
+      ]
+    }
+  }
+}
+
