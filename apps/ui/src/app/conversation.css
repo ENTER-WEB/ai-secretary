@@ -49,6 +49,7 @@
   font-weight: 600;
   line-height: 2.05;
 }
+.stage-copy:not([data-daily-greeting])::before { content: "おかえりなさい。今日の言葉を準備しています。"; }
 .stage-copy::after {
   content: "";
   position: absolute;

@@ -9,13 +9,15 @@ type Chat = { id: string; title: string; messages: Message[]; tasks: Task[] };
 
 const time = () => new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 const id = () => Math.random().toString(36).slice(2, 10);
-const dailyOpenings = ["おかえりなさい。", "今日もここまで来られましたね。", "お待ちしていました。", "まずは、深呼吸から始めましょう。"];
-const dailyCare = ["今日のがんばりは、私がここで預かっています。", "頭の中が少し散らかっていても大丈夫です。", "小さな前進も、ちゃんと仕事の一部です。", "気になっていることは、言葉にするだけでも軽くなります。"];
-const dailySupport = ["急がなくて大丈夫です。次の一歩を、いっしょにほどいていきましょう。", "終わったことにも、ちゃんと丸をつけてあげましょうね。", "あなたのペースで大丈夫。私は隣で、次の一手を見つけます。", "いま一番大切なことから、静かに整えていきましょう。"];
+const dailyOpenings = ["おかえりなさい。", "今日もここまで来られましたね。", "お待ちしていました。", "まずは、深呼吸から始めましょう。", "今日のあなたに会えてうれしいです。", "ここは、急がなくていい場所です。", "少しだけ、肩の力を抜きましょう。", "今日の続きを、私と始めましょう。"];
+const dailyCareStarts = ["今日のがんばりは、私がここで預かっています。", "頭の中が少し散らかっていても大丈夫です。", "小さな前進も、ちゃんと仕事の一部です。", "気になっていることは、言葉にするだけでも軽くなります。"];
+const dailyCareEnds = ["ひとつずつ、見える形にしていきましょう。", "できたことから、静かに数えていきましょう。", "いまの気持ちを置いてから、仕事に向かいましょう。", "私が整理役になりますから、安心して話してください。"];
+const dailySupport = ["急がなくて大丈夫です。次の一歩を、いっしょにほどいていきましょう。", "終わったことにも、ちゃんと丸をつけてあげましょうね。", "あなたのペースで大丈夫。私は隣で、次の一手を見つけます。", "いま一番大切なことから、静かに整えていきましょう。", "迷ったら、いちばん小さく始められる仕事を選びましょう。", "答えを急がず、まずは状況を一緒に見てみましょう。", "今日の余力に合わせて、仕事の大きさを決めましょう。", "後回しにしていたことも、ここでは責めません。", "あなたが決めやすいように、選択肢を整えます。", "いま必要な一手だけ、私に教えてください。", "途中まででも大丈夫。続きは一緒に持ちます。", "優先順位が曖昧なら、締切と影響から見ていきましょう。", "休むことも予定に入れて、今日を組み立てましょう。", "困っているところから、ほどいていきましょう。", "完成よりも、次に進める状態を作りましょう。", "静かな集中が戻るように、まず一つ片づけましょう。"];
 const greetingForToday = () => {
   const key = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
   const seed = [...key].reduce((total, character) => total + character.charCodeAt(0), 0);
-  return [dailyOpenings[seed % dailyOpenings.length], dailyCare[Math.floor(seed / 4) % dailyCare.length], dailySupport[Math.floor(seed / 16) % dailySupport.length]].join("\n");
+  const care = `${dailyCareStarts[Math.floor(seed / 8) % dailyCareStarts.length]} ${dailyCareEnds[Math.floor(seed / 32) % dailyCareEnds.length]}`;
+  return [dailyOpenings[seed % dailyOpenings.length], care, dailySupport[Math.floor(seed / 128) % dailySupport.length]].join("\n");
 };
 const taskStatusLabel = (status: Task["status"]) => ({ draft: "確認待ち", approved: "実行許可済み", done: "完了", running: "実行中", completed: "完了", failed: "失敗" })[status];
 
@@ -51,6 +53,37 @@ export default function Home() {
   useEffect(() => {
     const timer = window.setTimeout(() => document.querySelector(".stage-copy")?.setAttribute("data-daily-greeting", greetingForToday()), 0);
     return () => window.clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const form = document.querySelector<HTMLFormElement>(".composer");
+    const stageCopy = document.querySelector<HTMLElement>(".stage-copy");
+    const requestGreeting = async () => {
+      if (!stageCopy) return;
+      stageCopy.dataset.dailyGreeting = "新しいひとことを、Codexに考えてもらっています。";
+      try {
+        const response = await fetch("http://127.0.0.1:4317/greetings", { method: "POST", headers: { "content-type": "application/json", "x-ai-secretary-approval": "confirmed" } });
+        if (!response.ok) throw new Error("Codex bridge is unavailable.");
+        const { id: jobId } = await response.json();
+        const poll = async () => {
+          const jobResponse = await fetch(`http://127.0.0.1:4317/jobs/${jobId}`);
+          if (!jobResponse.ok) throw new Error("Greeting job could not be read.");
+          const job = await jobResponse.json();
+          if (job.status === "running") return window.setTimeout(() => { void poll(); }, 800);
+          stageCopy.dataset.dailyGreeting = job.status === "completed" && job.greeting ? job.greeting : "今日は、いつもの言葉でそばにいます。";
+        };
+        await poll();
+      } catch { stageCopy.dataset.dailyGreeting = "Codexへの接続が必要です。秘書の通常メッセージを表示しています。"; }
+    };
+    const onSubmit = (event: Event) => {
+      const inputElement = form?.querySelector<HTMLInputElement>("input");
+      if (inputElement?.value.trim() !== "/greeting") return;
+      event.preventDefault();
+      event.stopPropagation();
+      inputElement.value = "";
+      void requestGreeting();
+    };
+    form?.addEventListener("submit", onSubmit, true);
+    return () => form?.removeEventListener("submit", onSubmit, true);
   }, []);
   useEffect(() => { if (hasRestoredChats) window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats, hasRestoredChats]);
 
