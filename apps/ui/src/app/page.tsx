@@ -4,11 +4,12 @@ import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 type Message = { id: string; role: "user" | "assistant"; text: string; time: string };
-type Task = { id: string; title: string; detail: string; status: "draft" | "approved" | "done"; time: string; jobId?: string };
+type Task = { id: string; title: string; detail: string; status: "draft" | "approved" | "done" | "running" | "completed" | "failed"; time: string; jobId?: string; output?: string };
 type Chat = { id: string; title: string; messages: Message[]; tasks: Task[] };
 
 const time = () => new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 const id = () => Math.random().toString(36).slice(2, 10);
+const taskStatusLabel = (status: Task["status"]) => ({ draft: "確認待ち", approved: "実行許可済み", done: "完了", running: "実行中", completed: "完了", failed: "失敗" })[status];
 
 function loadChats(): Chat[] {
   if (typeof window === "undefined") return starterChats;
@@ -44,7 +45,8 @@ export default function Home() {
     try {
       if (window.aiSecretary) {
         const result = await window.aiSecretary.runTask(task.detail);
-        updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved", jobId: result.id } : item) }));
+        updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "running", jobId: result.id, output: "Codex is starting…" } : item) }));
+        pollJob(activeChat.id, task.id, result.id);
         setNotice(`Codexに送信しました。対象フォルダ：${result.workspace}`);
         return;
       }
@@ -53,6 +55,16 @@ export default function Home() {
       updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved" } : item) }));
       setNotice("Codexに送信しました。作業履歴で実行許可済みとして確認できます。");
     } catch (error) { setNotice(`送信できませんでした：${error instanceof Error ? error.message : "不明なエラー"}`); }
+  }
+  async function pollJob(chatId: string, taskId: string, jobId: string) {
+    if (!window.aiSecretary) return;
+    try {
+      const job = await window.aiSecretary.getJob(jobId);
+      const status = job.status === "completed" ? "completed" : job.status === "failed" ? "failed" : "running";
+      updateChat(chatId, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === taskId ? { ...item, status, output: job.output || "Codex is working…" } : item) }));
+      if (status === "running") window.setTimeout(() => { void pollJob(chatId, taskId, jobId); }, 800);
+      else setNotice(status === "completed" ? "Codexの作業が完了しました。" : "Codexの作業が失敗しました。作業履歴のログを確認してください。");
+    } catch (error) { updateChat(chatId, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === taskId ? { ...item, status: "failed", output: error instanceof Error ? error.message : "Unable to read Codex job status." } : item) })); }
   }
   async function chooseWorkspace() {
     if (!window.aiSecretary) { setNotice("公開版デスクトップアプリで作業フォルダを選べます。"); return; }
@@ -66,7 +78,7 @@ export default function Home() {
       <header className="topbar"><div><p className="eyebrow">AI SECRETARY</p><h1>{activeChat.title}</h1></div><button className="settings" aria-label="作業フォルダを選ぶ" onClick={chooseWorkspace}>⚙</button></header>
       <section className="stage" aria-label="秘書アバター"><div className={isResponding ? "avatar responding" : "avatar"}><div className="halo" /><div className="avatar-card">{avatar ? <Image src={avatar} alt="選択した秘書アバター" width={135} height={160} unoptimized /> : <div className="avatar-placeholder"><span className="hair" /><span className="face"><i className="eye left" /><i className="eye right" /><i className="mouth" /></span></div>}<span className="blink" /><span className="speech-mouth" /></div></div><div className="stage-copy"><p className="eyebrow">YOUR PERSONAL ASSISTANT</p><h2>お仕事、お預かりします。</h2><p>話す、整理する、確認してCodexに任せる。<br />すべてあなたの許可から始まります。</p><label className="avatar-picker"><input type="file" accept="image/*" onChange={onAvatarChange} />画像を選ぶ</label></div></section>
       <div className="tabs" role="tablist"><button className={activeTab === "talk" ? "tab active" : "tab"} onClick={() => setActiveTab("talk")}>会話 <span>{activeChat.messages.length}</span></button><button className={activeTab === "work" ? "tab active" : "tab"} onClick={() => setActiveTab("work")}>作業履歴 <span>{activeChat.tasks.length}</span></button></div>
-      {activeTab === "talk" ? <section className="panel messages" aria-label="会話履歴">{activeChat.messages.length === 0 ? <div className="empty">最初のメッセージを送って、相談を始めましょう。</div> : activeChat.messages.map((message) => <article className={`message ${message.role}`} key={message.id}><div className="message-avatar">{message.role === "assistant" ? "✦" : "あ"}</div><div><div className="bubble">{message.text}</div><time>{message.time}</time></div></article>)}</section> : <section className="panel work-log" aria-label="作業履歴">{activeChat.tasks.length === 0 ? <div className="empty">作業タスクはまだありません。下の欄からCodexへの依頼を下書きできます。</div> : activeChat.tasks.map((task) => <article className="task-card" key={task.id}><div><div className={`task-status ${task.status}`}>{task.status === "draft" ? "確認待ち" : task.status === "approved" ? "実行許可済み" : "完了"}</div><h3>{task.title}</h3><p>{task.detail}</p><time>{task.time}</time></div>{task.status === "draft" && <button className="approve" onClick={() => approveTask(task)}>内容を確認して許可</button>}</article>)}</section>}
+      {activeTab === "talk" ? <section className="panel messages" aria-label="会話履歴">{activeChat.messages.length === 0 ? <div className="empty">最初のメッセージを送って、相談を始めましょう。</div> : activeChat.messages.map((message) => <article className={`message ${message.role}`} key={message.id}><div className="message-avatar">{message.role === "assistant" ? "✦" : "あ"}</div><div><div className="bubble">{message.text}</div><time>{message.time}</time></div></article>)}</section> : <section className="panel work-log" aria-label="作業履歴">{activeChat.tasks.length === 0 ? <div className="empty">作業タスクはまだありません。下の欄からCodexへの依頼を下書きできます。</div> : activeChat.tasks.map((task) => <article className="task-card" key={task.id}><div><div className={`task-status ${task.status}`}>{taskStatusLabel(task.status)}</div><h3>{task.title}</h3><p>{task.detail}</p>{task.output && <pre className="task-output">{task.output}</pre>}<time>{task.time}</time></div>{task.status === "draft" && <button className="approve" onClick={() => approveTask(task)}>内容を確認して許可</button>}</article>)}</section>}
       <div className="notice">{notice}</div><form className="composer" onSubmit={activeTab === "talk" ? sendMessage : draftTask}><input value={activeTab === "talk" ? input : taskInput} onChange={(event) => activeTab === "talk" ? setInput(event.target.value) : setTaskInput(event.target.value)} placeholder={activeTab === "talk" ? "秘書に話しかける…" : "Codexに依頼する作業を下書き…"} /><button type="submit">{activeTab === "talk" ? "送信 ↑" : "下書きに追加 ＋"}</button></form>
     </section>
   </main>;

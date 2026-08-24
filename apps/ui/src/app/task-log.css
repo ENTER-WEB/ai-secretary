@@ -1,0 +1,4 @@
+.task-status.running { background: #e7e3ff; color: #5f50c7; }
+.task-status.completed { background: #e3f7ee; color: #2c9273; }
+.task-status.failed { background: #ffe9e9; color: #b23838; }
+.task-output { max-height: 180px; overflow: auto; margin: 10px 0 0; padding: 9px; border-radius: 7px; background: #25243a; color: #eeeefe; font: 10px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; }
