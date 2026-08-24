@@ -4,7 +4,7 @@ The codebase is prepared for a public Windows release but is intentionally not p
 
 ## Required owner actions
 
-1. Create a public distribution-only GitHub repository: `r-sakurai-vaizo/ai-secretary-releases`.
+1. Public distribution-only GitHub repository created: `r-sakurai-vaizo/ai-secretary-releases`.
 2. Buy and validate an organization-verified Windows code-signing certificate.
 3. Configure protected GitHub Actions secrets:
    - `WINDOWS_CERTIFICATE_BASE64`
