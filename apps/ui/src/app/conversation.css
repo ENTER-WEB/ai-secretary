@@ -1,0 +1,48 @@
+/* Conversation-first layout: keep the assistant visible while reading a long thread. */
+.sidebar {
+  background: #fff;
+  color: #28263f;
+  border-right: 1px solid #eceaf1;
+  box-shadow: 8px 0 26px rgba(46, 39, 77, 0.035);
+}
+
+.brand { color: #302c50; }
+.brand-mark { color: #7868d8; }
+.new-chat { background: #f7f5ff; border-color: #dcd6fb; color: #4d4290; }
+.new-chat span, .history-label, .sidebar-footer { color: #807b98; }
+.history-item { color: #58536e; }
+.history-item:hover, .history-item.active { background: #f2f0fc; color: #493f86; }
+.history-dot { background: #cac4d8; }
+.history-item.active .history-dot { background: #7668d7; box-shadow: 0 0 0 4px #7668d722; }
+
+.stage {
+  align-items: flex-end;
+  min-height: 300px;
+  padding: 18px 9% 0;
+  gap: clamp(20px, 6vw, 100px);
+  background: linear-gradient(125deg, #f5f2ff 0%, #e9f8f5 100%);
+}
+.stage:after { height: 28%; background: linear-gradient(0deg, #fff9, transparent); }
+.avatar { width: 235px; height: 278px; flex-basis: 235px; align-self: end; z-index: 2; }
+.halo { width: 218px; height: 218px; background: #ffffffa8; }
+.avatar-card { width: 185px; height: 240px; border-radius: 92px 92px 34px 34px; box-shadow: 0 24px 36px #5d588635; }
+.avatar-card img { object-position: center top; }
+.avatar-placeholder { transform: scale(1.36); transform-origin: center bottom; }
+.blink { left: 49px; top: 111px; transform: scale(1.35); transform-origin: left; }
+.speech-mouth { left: 78px; top: 148px; transform: scale(1.35); transform-origin: left; }
+.stage-copy { padding-bottom: 36px; max-width: 430px; }
+
+.messages { gap: 20px; max-height: 390px; overflow-y: auto; padding-right: 10px; scroll-behavior: smooth; }
+.message { max-width: min(690px, 88%); align-items: flex-start; }
+.message:not(.user) .message-avatar { background: linear-gradient(145deg, #a99cf0, #7667cd); color: white; box-shadow: 0 4px 12px #7667cd42; }
+.bubble { background: #fff; border: 1px solid #ece9f4; border-radius: 5px 17px 17px 17px; box-shadow: 0 5px 14px #2924440a; }
+.user .bubble { background: #e9f8f4; border-color: #cdece4; border-radius: 17px 5px 17px 17px; }
+.message time { padding-left: 3px; }
+
+@media (max-width: 720px) {
+  .sidebar { border-right: 0; border-bottom: 1px solid #eceaf1; }
+  .stage { min-height: 244px; padding: 14px 20px 0; }
+  .avatar { width: 145px; height: 196px; flex-basis: 145px; transform: scale(.88); transform-origin: left bottom; margin-right: -18px; }
+  .stage-copy { padding-bottom: 25px; }
+  .messages { max-height: none; }
+}
