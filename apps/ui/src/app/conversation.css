@@ -30,7 +30,36 @@
 .avatar-placeholder { transform: scale(1.36); transform-origin: center bottom; }
 .blink { left: 49px; top: 111px; transform: scale(1.35); transform-origin: left; }
 .speech-mouth { left: 78px; top: 148px; transform: scale(1.35); transform-origin: left; }
-.stage-copy { padding-bottom: 36px; max-width: 430px; }
+.stage-copy { position: relative; padding-bottom: 36px; max-width: 430px; }
+.stage-copy .eyebrow { margin-bottom: 9px; }
+.stage-copy h2,
+.stage-copy > p:not(.eyebrow) { display: none; }
+.stage-copy::before {
+  content: "今日もお疲れさまです。\A今日は暑かったですね。\A無理していませんか？";
+  display: block;
+  white-space: pre-line;
+  position: relative;
+  color: #3b3655;
+  background: #fff;
+  border: 1px solid #e9e4f5;
+  border-radius: 18px 18px 18px 4px;
+  box-shadow: 0 10px 25px rgba(66, 57, 105, 0.1);
+  padding: 17px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 2.05;
+}
+.stage-copy::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -8px 0 0 -6px;
+  background: #fff;
+  border-left: 1px solid #e9e4f5;
+  border-bottom: 1px solid #e9e4f5;
+  transform: rotate(45deg);
+}
 
 .messages { gap: 20px; max-height: 390px; overflow-y: auto; padding-right: 10px; scroll-behavior: smooth; }
 .message { max-width: min(690px, 88%); align-items: flex-start; }
@@ -44,5 +73,6 @@
   .stage { min-height: 244px; padding: 14px 20px 0; }
   .avatar { width: 145px; height: 196px; flex-basis: 145px; transform: scale(.88); transform-origin: left bottom; margin-right: -18px; }
   .stage-copy { padding-bottom: 25px; }
+  .stage-copy::before { padding: 13px 15px; font-size: 12px; line-height: 1.85; }
   .messages { max-height: none; }
 }
