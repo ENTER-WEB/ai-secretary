@@ -6,6 +6,7 @@ const PORT = 4317;
 const MAX_TASK_CHARS = 8000;
 const allowedOrigins = new Set(["http://localhost:3000", "http://127.0.0.1:3000"]);
 const jobs = new Map();
+const workspace = process.env.AI_SECRETARY_WORKSPACE || process.cwd();
 
 function reply(response, status, body) {
   response.writeHead(status, { "content-type": "application/json; charset=utf-8" });
@@ -45,7 +46,7 @@ const server = createServer(async (request, response) => {
     if (typeof task !== "string" || !task.trim() || task.length > MAX_TASK_CHARS) return reply(response, 400, { error: "Task must be 1-8000 characters." });
     const job = { id: randomUUID(), status: "running", task, output: "", startedAt: new Date().toISOString() };
     jobs.set(job.id, job);
-    const child = spawn("codex", ["exec", "--json", "--sandbox", "workspace-write", task], { cwd: process.cwd(), shell: false, windowsHide: true });
+    const child = spawn("codex", ["exec", "--json", "--sandbox", "workspace-write", task], { cwd: workspace, shell: false, windowsHide: true });
     child.stdout.on("data", (chunk) => { job.output = (job.output + chunk).slice(-50000); });
     child.stderr.on("data", (chunk) => { job.output = (job.output + chunk).slice(-50000); });
     child.on("error", (error) => { job.status = "failed"; job.output += `\n${error.message}`; job.finishedAt = new Date().toISOString(); });
@@ -54,4 +55,4 @@ const server = createServer(async (request, response) => {
   } catch (error) { return reply(response, 400, { error: error.message }); }
 });
 
-server.listen(PORT, "127.0.0.1", () => console.log(`AI Secretary Codex bridge: http://127.0.0.1:${PORT}`));
+server.listen(PORT, "127.0.0.1", () => console.log(`AI Secretary Codex bridge: http://127.0.0.1:${PORT} (workspace: ${workspace})`));
