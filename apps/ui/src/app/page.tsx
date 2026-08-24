@@ -23,8 +23,9 @@ const starterChats: Chat[] = [
 ];
 
 export default function Home() {
-  const [chats, setChats] = useState(loadChats);
-  const [activeChatId, setActiveChatId] = useState(() => loadChats()[0].id);
+  const [chats, setChats] = useState<Chat[]>(starterChats);
+  const [activeChatId, setActiveChatId] = useState(starterChats[0].id);
+  const [hasRestoredChats, setHasRestoredChats] = useState(false);
   const [activeTab, setActiveTab] = useState<"talk" | "work">("talk");
   const [input, setInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
@@ -33,7 +34,13 @@ export default function Home() {
   const [notice, setNotice] = useState("ローカルモード：Codexの認証情報はこの画面に保存されません。");
   const activeChat = useMemo(() => chats.find((chat) => chat.id === activeChatId) ?? chats[0], [activeChatId, chats]);
 
-  useEffect(() => { window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats]);
+  useEffect(() => {
+    const restoredChats = loadChats();
+    setChats(restoredChats);
+    setActiveChatId(restoredChats[0].id);
+    setHasRestoredChats(true);
+  }, []);
+  useEffect(() => { if (hasRestoredChats) window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats, hasRestoredChats]);
 
   function updateChat(chatId: string, updater: (chat: Chat) => Chat) { setChats((current) => current.map((chat) => (chat.id === chatId ? updater(chat) : chat))); }
   function createChat() { const chat: Chat = { id: id(), title: "新しい相談", messages: [], tasks: [] }; setChats((current) => [chat, ...current]); setActiveChatId(chat.id); setActiveTab("talk"); }
