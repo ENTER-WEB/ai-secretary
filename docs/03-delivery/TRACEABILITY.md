@@ -1,8 +1,9 @@
 # Traceability
 
-|要求ID|設計/ADR|タスク|受入条件|テスト/証拠|運用監視|状態|
-|---|---|---|---|---|---|---|
-|FR-001||||||Draft|
-
-要求の追加・変更・削除時にこの表を更新する。孤立した要求、テストされない要求、根拠のない実装を残さない。
-
+| Requirement | Design | Implementation | Test evidence | Operations |
+|---|---|---|---|---|
+| FR-001 / FR-002 | UI avatar component | `apps/ui/src/app/page.tsx` | UI E2E | Local data controls |
+| FR-003 / FR-004 | Chat state model | `apps/ui/src/app/page.tsx` | UI E2E | Local data controls |
+| FR-005 / FR-006 | ADR-0001, ADR-0002 | `apps/desktop-shell/*` | IPC contract tests | Signed desktop release |
+| NFR-002 / NFR-004 | Desktop security model | `main.cjs`, `preload.cjs` | Electron security test | Release gate |
+| NFR-006 / NFR-007 | Release pipeline | `.github/workflows/release.yml` | CI attestation | Public release procedure |

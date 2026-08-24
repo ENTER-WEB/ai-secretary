@@ -1,0 +1,63 @@
+name: Signed Windows release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Signed release tag (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    env:
+      CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+      CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_REPOSITORY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/ui/package-lock.json
+            apps/desktop-shell/package-lock.json
+      - name: Require release secrets
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CSC_LINK) -or [string]::IsNullOrWhiteSpace($env:CSC_KEY_PASSWORD) -or [string]::IsNullOrWhiteSpace($env:GH_TOKEN)) { throw "Code-signing and public-release secrets are mandatory." }
+      - name: Install and verify UI
+        working-directory: apps/ui
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm audit --omit=dev --audit-level=high
+      - name: Install and verify desktop shell
+        working-directory: apps/desktop-shell
+        run: |
+          npm ci
+          npm run lint
+          npm audit --omit=dev --audit-level=high
+      - name: Verify repository contract
+        run: python scripts/validate.py
+      - name: Create SBOM and checksum
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path release -Force | Out-Null
+          Push-Location apps/ui; npm sbom --sbom-format cyclonedx | Out-File -Encoding utf8 ../../release/ui.sbom.cdx.json; Pop-Location
+          Push-Location apps/desktop-shell; npm sbom --sbom-format cyclonedx | Out-File -Encoding utf8 ../../release/desktop-shell.sbom.cdx.json; Pop-Location
+      - name: Build signed installer
+        working-directory: apps/desktop-shell
+        run: npm run dist:win -- --publish never
+      - name: Produce installer checksum
+        shell: pwsh
+        run: Get-FileHash apps/desktop-shell/dist/*.exe -Algorithm SHA256 | Format-List | Out-File -Encoding utf8 release/SHA256SUMS.txt
+      - name: Publish signed assets to public distribution repository
+        working-directory: apps/desktop-shell
+        run: npx electron-builder --win nsis --publish always

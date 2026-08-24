@@ -34,17 +34,28 @@ export default function Home() {
   async function approveTask(task: Task) {
     setNotice("Codexブリッジへ承認済みタスクを送信しています…");
     try {
+      if (window.aiSecretary) {
+        const result = await window.aiSecretary.runTask(task.detail);
+        updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved" } : item) }));
+        setNotice(`Codexに送信しました。対象フォルダ：${result.workspace}`);
+        return;
+      }
       const response = await fetch("http://127.0.0.1:4317/tasks", { method: "POST", headers: { "content-type": "application/json", "x-ai-secretary-approval": "confirmed" }, body: JSON.stringify({ task: task.detail }) });
       if (!response.ok) throw new Error((await response.json()).error ?? "Bridge rejected the task");
       updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved" } : item) }));
       setNotice("Codexに送信しました。作業履歴で実行許可済みとして確認できます。");
     } catch (error) { setNotice(`送信できませんでした：${error instanceof Error ? error.message : "不明なエラー"}`); }
   }
+  async function chooseWorkspace() {
+    if (!window.aiSecretary) { setNotice("公開版デスクトップアプリで作業フォルダを選べます。"); return; }
+    const workspace = await window.aiSecretary.selectWorkspace();
+    setNotice(workspace ? `作業フォルダを選択しました：${workspace}` : "作業フォルダの選択を取り消しました。");
+  }
 
   return <main className="app-shell">
     <aside className="sidebar"><div className="brand"><span className="brand-mark">✦</span><span>秘書室</span></div><button className="new-chat" onClick={createChat}><span>＋</span> 新しい相談</button><div className="history-label">チャット履歴</div><nav className="history" aria-label="チャット履歴">{chats.map((chat) => <button key={chat.id} className={chat.id === activeChat.id ? "history-item active" : "history-item"} onClick={() => setActiveChatId(chat.id)}><span className="history-dot" /><span>{chat.title}</span></button>)}</nav><div className="sidebar-footer"><span className="status-dot" />ローカル秘書モード</div></aside>
     <section className="workspace">
-      <header className="topbar"><div><p className="eyebrow">AI SECRETARY</p><h1>{activeChat.title}</h1></div><button className="settings" aria-label="設定">⚙</button></header>
+      <header className="topbar"><div><p className="eyebrow">AI SECRETARY</p><h1>{activeChat.title}</h1></div><button className="settings" aria-label="作業フォルダを選ぶ" onClick={chooseWorkspace}>⚙</button></header>
       <section className="stage" aria-label="秘書アバター"><div className={isResponding ? "avatar responding" : "avatar"}><div className="halo" /><div className="avatar-card">{avatar ? <Image src={avatar} alt="選択した秘書アバター" width={135} height={160} unoptimized /> : <div className="avatar-placeholder"><span className="hair" /><span className="face"><i className="eye left" /><i className="eye right" /><i className="mouth" /></span></div>}<span className="blink" /><span className="speech-mouth" /></div></div><div className="stage-copy"><p className="eyebrow">YOUR PERSONAL ASSISTANT</p><h2>お仕事、お預かりします。</h2><p>話す、整理する、確認してCodexに任せる。<br />すべてあなたの許可から始まります。</p><label className="avatar-picker"><input type="file" accept="image/*" onChange={onAvatarChange} />画像を選ぶ</label></div></section>
       <div className="tabs" role="tablist"><button className={activeTab === "talk" ? "tab active" : "tab"} onClick={() => setActiveTab("talk")}>会話 <span>{activeChat.messages.length}</span></button><button className={activeTab === "work" ? "tab active" : "tab"} onClick={() => setActiveTab("work")}>作業履歴 <span>{activeChat.tasks.length}</span></button></div>
       {activeTab === "talk" ? <section className="panel messages" aria-label="会話履歴">{activeChat.messages.length === 0 ? <div className="empty">最初のメッセージを送って、相談を始めましょう。</div> : activeChat.messages.map((message) => <article className={`message ${message.role}`} key={message.id}><div className="message-avatar">{message.role === "assistant" ? "✦" : "あ"}</div><div><div className="bubble">{message.text}</div><time>{message.time}</time></div></article>)}</section> : <section className="panel work-log" aria-label="作業履歴">{activeChat.tasks.length === 0 ? <div className="empty">作業タスクはまだありません。下の欄からCodexへの依頼を下書きできます。</div> : activeChat.tasks.map((task) => <article className="task-card" key={task.id}><div><div className={`task-status ${task.status}`}>{task.status === "draft" ? "確認待ち" : task.status === "approved" ? "実行許可済み" : "完了"}</div><h3>{task.title}</h3><p>{task.detail}</p><time>{task.time}</time></div>{task.status === "draft" && <button className="approve" onClick={() => approveTask(task)}>内容を確認して許可</button>}</article>)}</section>}
