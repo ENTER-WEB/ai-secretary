@@ -69,6 +69,28 @@
 .user .bubble { background: #e9f8f4; border-color: #cdece4; border-radius: 17px 5px 17px 17px; }
 .message time { padding-left: 3px; }
 
+/* Mio's profile: the portrait stays present, but conversation takes priority. */
+.stage { min-height: 220px; padding: 12px 9% 0; gap: clamp(16px, 4vw, 54px); }
+.avatar { width: 155px; height: 202px; flex-basis: 155px; }
+.halo { width: 142px; height: 142px; }
+.avatar-card { width: 124px; height: 170px; border-radius: 62px 62px 25px 25px; box-shadow: 0 15px 24px #5d58862c; }
+.avatar-placeholder { transform: scale(.92); }
+.blink { left: 34px; top: 82px; transform: scale(.92); }
+.speech-mouth { left: 52px; top: 111px; transform: scale(.92); }
+.stage-copy { padding-bottom: 20px; max-width: 520px; }
+.stage-copy .eyebrow { font-size: 0; }
+.stage-copy .eyebrow::after { content: "秘書・澪（みお）｜ほどく、整える、伴走する"; font-size: 10px; letter-spacing: .08em; color: #716b91; }
+.stage-copy::before { padding: 13px 17px; font-size: 13px; line-height: 1.8; }
+.messages { min-height: 390px; max-height: 520px; }
+.message:not(.user) .message-avatar { background: var(--secretary-avatar-image) center / cover no-repeat, #a99cf0; color: transparent; border: 1px solid #e2dff2; box-shadow: 0 3px 10px #7667cd32; }
+
+@media (max-width: 720px) {
+  .stage { min-height: 205px; }
+  .avatar { width: 118px; height: 165px; flex-basis: 118px; transform: scale(.82); transform-origin: left bottom; }
+  .stage-copy { padding-bottom: 14px; }
+  .stage-copy::before { padding: 11px 13px; font-size: 11px; }
+}
+
 @media (max-width: 720px) {
   .sidebar { border-right: 0; border-bottom: 1px solid #eceaf1; }
   .stage { min-height: 244px; padding: 14px 20px 0; }

@@ -23,12 +23,12 @@ const taskStatusLabel = (status: Task["status"]) => ({ draft: "確認待ち", ap
 
 function loadChats(): Chat[] {
   if (typeof window === "undefined") return starterChats;
-  try { const saved = window.localStorage.getItem("ai-secretary-chats-v1"); const parsed = saved ? JSON.parse(saved) : null; return Array.isArray(parsed) && parsed.length ? parsed : starterChats; }
+  try { const saved = window.localStorage.getItem("ai-secretary-chats-v1"); const parsed = saved ? JSON.parse(saved) : null; return Array.isArray(parsed) && parsed.length ? parsed.map((chat: Chat) => chat.title === "今日の秘書室" ? { ...chat, title: "メインルーム" } : chat) : starterChats; }
   catch { window.localStorage.removeItem("ai-secretary-chats-v1"); return starterChats; }
 }
 
 const starterChats: Chat[] = [
-  { id: "today", title: "今日の秘書室", messages: [{ id: "a1", role: "assistant", text: "おかえりなさい。今日の仕事を一緒に整理しましょう。\n必要なら、内容を確認してからCodexへ依頼できます。", time: "09:10" }], tasks: [{ id: "t1", title: "作業の準備", detail: "依頼内容をチャットで教えてください。実行前に必ず確認します。", status: "done", time: "09:10" }] },
+  { id: "today", title: "メインルーム", messages: [{ id: "a1", role: "assistant", text: "おかえりなさい。今日の仕事を一緒に整理しましょう。\n必要なら、内容を確認してからCodexへ依頼できます。", time: "09:10" }], tasks: [{ id: "t1", title: "作業の準備", detail: "依頼内容をチャットで教えてください。実行前に必ず確認します。", status: "done", time: "09:10" }] },
   { id: "planning", title: "新規プロジェクトの相談", messages: [{ id: "a2", role: "assistant", text: "ここでは企画や依頼内容を整理できます。", time: "昨日" }], tasks: [] },
 ];
 
@@ -54,6 +54,7 @@ export default function Home() {
     const timer = window.setTimeout(() => document.querySelector(".stage-copy")?.setAttribute("data-daily-greeting", greetingForToday()), 0);
     return () => window.clearTimeout(timer);
   }, []);
+  useEffect(() => { document.documentElement.style.setProperty("--secretary-avatar-image", `url("${avatar}")`); }, [avatar]);
   useEffect(() => {
     const form = document.querySelector<HTMLFormElement>(".composer");
     const stageCopy = document.querySelector<HTMLElement>(".stage-copy");
