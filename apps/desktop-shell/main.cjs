@@ -32,6 +32,12 @@ app.whenReady().then(() => {
   const csp = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; form-action 'none'";
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => callback({ responseHeaders: { ...details.responseHeaders, "Content-Security-Policy": [csp] } }));
   ipcMain.handle("secretary:get-workspace", () => workspace);
+  ipcMain.handle("secretary:get-job", (_event, jobId) => {
+    if (typeof jobId !== "string") throw new Error("Invalid job id.");
+    const job = jobs.get(jobId);
+    if (!job) throw new Error("Unknown job.");
+    return { id: job.id, status: job.status, output: job.output, workspace: job.workspace, exitCode: job.exitCode ?? null };
+  });
   ipcMain.handle("secretary:select-workspace", async () => {
     const result = await dialog.showOpenDialog({ properties: ["openDirectory", "createDirectory"] });
     if (!result.canceled && result.filePaths[0]) workspace = validateWorkspace(result.filePaths[0]);

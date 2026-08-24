@@ -1,14 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
 type Message = { id: string; role: "user" | "assistant"; text: string; time: string };
-type Task = { id: string; title: string; detail: string; status: "draft" | "approved" | "done"; time: string };
+type Task = { id: string; title: string; detail: string; status: "draft" | "approved" | "done"; time: string; jobId?: string };
 type Chat = { id: string; title: string; messages: Message[]; tasks: Task[] };
 
 const time = () => new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit" }).format(new Date());
 const id = () => Math.random().toString(36).slice(2, 10);
+
+function loadChats(): Chat[] {
+  if (typeof window === "undefined") return starterChats;
+  try { const saved = window.localStorage.getItem("ai-secretary-chats-v1"); const parsed = saved ? JSON.parse(saved) : null; return Array.isArray(parsed) && parsed.length ? parsed : starterChats; }
+  catch { window.localStorage.removeItem("ai-secretary-chats-v1"); return starterChats; }
+}
 
 const starterChats: Chat[] = [
   { id: "today", title: "今日の秘書室", messages: [{ id: "a1", role: "assistant", text: "おかえりなさい。今日の仕事を一緒に整理しましょう。\n必要なら、内容を確認してからCodexへ依頼できます。", time: "09:10" }], tasks: [{ id: "t1", title: "作業の準備", detail: "依頼内容をチャットで教えてください。実行前に必ず確認します。", status: "done", time: "09:10" }] },
@@ -16,8 +22,8 @@ const starterChats: Chat[] = [
 ];
 
 export default function Home() {
-  const [chats, setChats] = useState(starterChats);
-  const [activeChatId, setActiveChatId] = useState("today");
+  const [chats, setChats] = useState(loadChats);
+  const [activeChatId, setActiveChatId] = useState(() => loadChats()[0].id);
   const [activeTab, setActiveTab] = useState<"talk" | "work">("talk");
   const [input, setInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
@@ -25,6 +31,8 @@ export default function Home() {
   const [isResponding, setIsResponding] = useState(false);
   const [notice, setNotice] = useState("ローカルモード：Codexの認証情報はこの画面に保存されません。");
   const activeChat = useMemo(() => chats.find((chat) => chat.id === activeChatId) ?? chats[0], [activeChatId, chats]);
+
+  useEffect(() => { window.localStorage.setItem("ai-secretary-chats-v1", JSON.stringify(chats)); }, [chats]);
 
   function updateChat(chatId: string, updater: (chat: Chat) => Chat) { setChats((current) => current.map((chat) => (chat.id === chatId ? updater(chat) : chat))); }
   function createChat() { const chat: Chat = { id: id(), title: "新しい相談", messages: [], tasks: [] }; setChats((current) => [chat, ...current]); setActiveChatId(chat.id); setActiveTab("talk"); }
@@ -36,7 +44,7 @@ export default function Home() {
     try {
       if (window.aiSecretary) {
         const result = await window.aiSecretary.runTask(task.detail);
-        updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved" } : item) }));
+        updateChat(activeChat.id, (chat) => ({ ...chat, tasks: chat.tasks.map((item) => item.id === task.id ? { ...item, status: "approved", jobId: result.id } : item) }));
         setNotice(`Codexに送信しました。対象フォルダ：${result.workspace}`);
         return;
       }
