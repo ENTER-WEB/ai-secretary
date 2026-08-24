@@ -12,11 +12,13 @@ The codebase is prepared for a public Windows release but is intentionally not p
    - `PUBLIC_RELEASE_REPOSITORY_TOKEN` (limited to distribution repository releases only)
 4. Choose and publish the end-user license, privacy policy, support contact, and security-reporting email.
 5. Add a clean-Windows-VM installer test to the release approval record.
+6. For macOS: enroll in Apple Developer Program, configure Developer ID Application certificate and Apple notarization secrets, then test on both Apple Silicon and Intel Macs.
 
 ## Publication package
 
 - Signed `.exe` installer
 - A branded `.ico` application icon
+- Notarized macOS `.dmg` and `.zip` artifacts
 - SHA-256 checksum file
 - CycloneDX SBOMs
 - Release notes with supported Windows version and known limitations

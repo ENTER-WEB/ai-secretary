@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "electron": "^39.2.7",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "@electron/notarize": "^3.1.0"
   },
   "build": {
     "appId": "jp.vaizo.ai-secretary",
@@ -21,6 +22,8 @@
     "files": ["main.cjs", "preload.cjs", "package.json"],
     "extraResources": [{ "from": "../ui/out", "to": "ui", "filter": ["**/*"] }],
     "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "mac": { "target": ["dmg", "zip"], "category": "public.app-category.productivity", "hardenedRuntime": true, "gatekeeperAssess": false, "entitlements": "build/entitlements.mac.plist", "entitlementsInherit": "build/entitlements.mac.plist" },
+    "afterSign": "scripts/notarize.cjs",
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
     "publish": [{ "provider": "github", "owner": "r-sakurai-vaizo", "repo": "ai-secretary-releases" }]
   }

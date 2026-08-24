@@ -1,0 +1,49 @@
+name: Notarized macOS release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Notarized release tag (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: macos-latest
+    env:
+      CSC_LINK: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+      CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_REPOSITORY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/ui/package-lock.json
+            apps/desktop-shell/package-lock.json
+      - name: Require notarization secrets
+        run: |
+          test -n "$CSC_LINK" && test -n "$CSC_KEY_PASSWORD" && test -n "$APPLE_ID" && test -n "$APPLE_APP_SPECIFIC_PASSWORD" && test -n "$APPLE_TEAM_ID" && test -n "$GH_TOKEN"
+      - name: Build static UI
+        working-directory: apps/ui
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+          npm audit --omit=dev --audit-level=high
+      - name: Build notarized macOS artifacts
+        working-directory: apps/desktop-shell
+        run: |
+          npm ci
+          npm run lint
+          npm audit --omit=dev --audit-level=high
+          npx electron-builder --mac --universal --publish always
