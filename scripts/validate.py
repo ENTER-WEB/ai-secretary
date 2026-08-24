@@ -6,6 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+IGNORED_PARTS = {"node_modules", ".next", ".git", ".venv", "dist", "build"}
 
 REQUIRED_FILES = [
     "README.md",
@@ -85,6 +86,8 @@ def validate_prompts(errors: list[str]) -> None:
 
 def validate_markdown_fences(errors: list[str]) -> None:
     for path in ROOT.rglob("*.md"):
+        if any(part in IGNORED_PARTS for part in path.relative_to(ROOT).parts):
+            continue
         text = path.read_text(encoding="utf-8")
         if text.count("```") % 2:
             errors.append(f"unbalanced code fence: {path.relative_to(ROOT)}")
@@ -93,6 +96,8 @@ def validate_markdown_fences(errors: list[str]) -> None:
 def validate_internal_links(errors: list[str]) -> None:
     pattern = re.compile(r"\[[^\]]+\]\((?!https?://|#)([^)]+)\)")
     for path in ROOT.rglob("*.md"):
+        if any(part in IGNORED_PARTS for part in path.relative_to(ROOT).parts):
+            continue
         text = path.read_text(encoding="utf-8")
         for target in pattern.findall(text):
             clean = target.split("#", 1)[0]

@@ -4,6 +4,7 @@ Thumbs.db
 .env.*
 !.env.example
 node_modules/
+apps/desktop/
 .venv/
 __pycache__/
 *.pyc

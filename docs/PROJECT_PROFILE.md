@@ -1,35 +1,16 @@
 # Project Profile
 
-## 選択
+## Selection
 
-- プロファイル: `Light | Standard | Regulated`
-- 選択理由:
-- 承認者:
-- 見直し日:
-
-## 判定ガイド
-
-次のいずれかがあればStandard以上とする。
-
-- 複数チームまたは外部組織が利用する。
-- 個人情報、機密情報、決済、認証を扱う。
-- 本番停止が業務へ影響する。
-- 外部API、クラウド、オンプレ、エッジ、ハードウェアと連携する。
-- データ移行や後方互換性が必要。
-
-医療、金融、法規制、重要インフラ、安全性に関係する制御、監査義務があればRegulatedを検討する。
+- Profile: `Standard`
+- Reason: local AI-agent control, user content, Codex integration, and operational safety require explicit controls.
+- Decision date: 2026-08-24
 
 ## Tailoring
 
-省略する成果物と理由を記載する。省略は暗黙に行わない。
-
-|成果物|必須/省略|理由|承認者|
+| Artifact | Scope | Decision | Owner |
 |---|---|---|---|
-|PRD||||
-|非機能要求||||
-|ADR||||
-|環境・HW表||||
-|脅威分析||||
-|Runbook||||
-|復旧試験||||
-
+| PRD and requirements | Required | v1 local-first assistant | Product owner |
+| Architecture / ADR | Required | Local Codex bridge; no remote credential forwarding | Engineering |
+| Environment matrix | Required | Windows desktop development and local Codex CLI | Engineering |
+| Operations / backup | Required | Exportable history; no automatic remote backup in v1 | Product owner |

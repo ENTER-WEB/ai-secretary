@@ -1,39 +1,22 @@
 # Idea
 
-## 一文で
+## One sentence
 
-誰の、どの問題を、どのように改善するか。
+An anime-avatar desktop web app where a secretary chats with the user, visually reacts (blink and mouth movement), keeps searchable histories, and submits explicitly approved tasks to the locally signed-in Codex client.
 
-## 背景と現状
+## User and problem
 
-- 現在の手段:
-- 発生頻度:
-- 影響:
-- なぜ今か:
+- Primary user: the owner of this Windows PC.
+- Problem: switching among a chat UI, a human-friendly task view, and Codex makes delegated work hard to track.
+- Success: start a conversation, choose an avatar image, review the chat and task transcript separately, and approve a Codex task without exposing credentials to a remote service.
 
-## 対象ユーザー
+## v1 scope
 
-|ユーザー|目的|利用環境|困りごと|
-|---|---|---|---|
-|||||
+- Avatar image upload/selection, blink, speech-style mouth animation.
+- Chat workspace with a left history list and separate Conversation / Work log tabs.
+- Local-only task queue and a guarded Codex bridge contract.
+- Explicit approval before any Codex invocation; no unattended desktop, browser, file, or account action.
 
-## 期待する成果
+## Out of scope
 
-- 成功指標:
-- 期限:
-- 許容コスト:
-
-## 初期スコープ
-
-- v1:
-- 将来:
-- 対象外:
-
-## 制約
-
-- 技術:
-- 法務・セキュリティ:
-- データ:
-- 環境・ハードウェア:
-- 人・運用:
-
+- Voice recognition/synthesis, multi-user access, mobile application, cloud sync, autonomous recurring jobs, and direct use of a personal ChatGPT/Codex session token by a web server.
